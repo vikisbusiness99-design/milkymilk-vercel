@@ -1,7 +1,3 @@
-// ============================================
-// FILE: api/index.js
-// ============================================
-
 export default async function handler(req, res) {
   console.log('=== Request received ===');
   console.log('Method:', req.method);
