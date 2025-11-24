@@ -1,3 +1,7 @@
+// ============================================
+// FILE: api/index.js
+// ============================================
+
 export default async function handler(req, res) {
   console.log('=== Request received ===');
   console.log('Method:', req.method);
@@ -20,6 +24,17 @@ export default async function handler(req, res) {
   // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
+  }
+
+  // Handle GET requests with helpful info
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      status: 'ok',
+      message: 'NVIDIA NIM Proxy is running',
+      usage: 'Send POST requests to this endpoint with OpenAI-compatible chat completion format',
+      endpoint: req.headers.host,
+      methods_allowed: ['POST', 'OPTIONS']
+    });
   }
 
   // Only allow POST
