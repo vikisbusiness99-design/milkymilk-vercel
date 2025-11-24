@@ -1,3 +1,7 @@
+// ============================================
+// FILE: api/index.js
+// ============================================
+
 export default async function handler(req, res) {
   console.log('=== Request received ===');
   console.log('Method:', req.method);
@@ -12,9 +16,14 @@ export default async function handler(req, res) {
     'Access-Control-Max-Age': '86400',
   };
 
+  // Apply CORS headers to all responses
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
+
   // Handle preflight
   if (req.method === 'OPTIONS') {
-    return res.status(204).setHeader('Access-Control-Allow-Origin', '*').end();
+    return res.status(204).end();
   }
 
   // Only allow POST
@@ -96,9 +105,6 @@ export default async function handler(req, res) {
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
         res.setHeader('X-Accel-Buffering', 'no');
-        Object.entries(corsHeaders).forEach(([key, value]) => {
-          res.setHeader(key, value);
-        });
         
         // Stream the response
         const reader = response.body.getReader();
@@ -131,9 +137,6 @@ export default async function handler(req, res) {
         // Non-streaming response
         console.log('Non-streaming response');
         const data = await response.json();
-        Object.entries(corsHeaders).forEach(([key, value]) => {
-          res.setHeader(key, value);
-        });
         res.status(200).json(data);
       }
       
@@ -156,10 +159,6 @@ export default async function handler(req, res) {
     
   } catch (error) {
     console.error('Proxy error:', error);
-    
-    Object.entries(corsHeaders).forEach(([key, value]) => {
-      res.setHeader(key, value);
-    });
     
     return res.status(500).json({
       error: {
