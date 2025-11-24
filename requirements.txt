@@ -1,5 +1,4 @@
-litellm[proxy]==1.52.9
-fastapi==0.115.6
-uvicorn[standard]==0.32.1
-python-dotenv==1.0.0
-
+litellm[proxy]
+fastapi
+uvicorn[standard]
+python-dotenv
