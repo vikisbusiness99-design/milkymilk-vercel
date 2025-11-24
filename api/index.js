@@ -25,62 +25,21 @@ export default async function handler(req, res) {
     const janitorClient = req.headers['x-janitor-client'] || '';
     const isMobile = userAgent.includes('Mobile') || janitorClient.toLowerCase().includes('mobile');
     
-    // Get model and determine which API to use
-    const model = body.model || 'deepseek-r1';
-    const messages = body.messages || [];
-    const stream = body.stream !== false; // Default to streaming
-    const temperature = body.temperature || 0.7;
-    const maxTokens = body.max_tokens || 2048;
-    
-    // Model routing
-    let apiKey, apiBase, providerModel;
-    
-    if (model.includes('longcat')) {
-      apiKey = process.env.LONGCAT_API_KEY;
-      apiBase = 'https://api.longcat.chat/openai/v1';
-      providerModel = model.includes('thinking') ? 'LongCat-Flash-Thinking' : 'LongCat-Flash-Chat';
-    } else {
-      // Default to NVIDIA NIM
-      apiKey = process.env.NVIDIA_API_KEY;
-      apiBase = 'https://integrate.api.nvidia.com/v1';
-      
-      // Map model names to NVIDIA NIM format
-      const modelMap = {
-        'deepseek-r1': 'deepseek-ai/deepseek-r1',
-        'deepseek-r1-0528': 'deepseek-ai/deepseek-r1-0528',
-        'deepseek-3.1': 'deepseek-ai/deepseek-v3.1',
-        'deepseek-terminus': 'deepseek-ai/deepseek-v3.1-terminus',
-        'kimi-instruct': 'moonshotai/kimi-k2-instruct-0905',
-        'mistral-nemotron': 'mistralai/mistral-nemotron',
-        'qwen3-next': 'qwen/qwen3-next-80b-a3b-thinking',
-        'nvidia-nemotron': 'nvidia/llama-3.1-nemotron-ultra-253b-v1',
-      };
-      
-      providerModel = modelMap[model] || model;
-    }
+    // Get NVIDIA API credentials
+    const apiKey = process.env.NVIDIA_API_KEY;
+    const apiBase = 'https://integrate.api.nvidia.com/v1';
     
     if (!apiKey) {
       return res.status(500).json({ 
         error: { 
-          message: 'API key not configured', 
+          message: 'NVIDIA_API_KEY not configured', 
           type: 'configuration_error' 
         } 
       });
     }
     
-    // Prepare request payload
-    const payload = {
-      model: providerModel,
-      messages: messages,
-      temperature: temperature,
-      max_tokens: maxTokens,
-      stream: stream,
-    };
-    
-    // Add extra parameters for reasoning models
-    if (model === 'deepseek-terminus') {
-      payload.chat_template_kwargs = { thinking: true };
-    }
+    // Forward the request body as-is (OpenAI compatible)
+    const payload = body;
     
     // Make request with timeout
     const controller = new AbortController();
@@ -110,8 +69,8 @@ export default async function handler(req, res) {
         });
       }
       
-      // Handle streaming response
-      if (stream) {
+      // Detect if streaming from request body
+      const stream = payload.stream !== false;
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
